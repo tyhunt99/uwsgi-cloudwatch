@@ -43,6 +43,13 @@ To set the region, use `--region`
 uwsgi-cloudwatch http://localhost:9091 --region eu-west-1
 ```
 
+To add dimensions use `--dimension`
+*   Dimensions are entered as space separated key/value pairs.
+*   Multiple dimensions can be added with separate `--dimension` flags
+```bash
+uwsgi-cloudwatch http://localhost:9091 --dimension instance_name production --dimension region west
+```
+
 Metrics
 -------
 uWSGI Stats Server [exposes stats](http://uwsgi-docs.readthedocs.io/en/latest/StatsServer.html#the-uwsgi-stats-server) that are made available as metrics:
