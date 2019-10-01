@@ -30,7 +30,7 @@ def run_periodically(func, interval):
     _set()
 
 
-def put_metrics(metrics, region, namespace, metric_prefix):
+def put_metrics(metrics, region, namespace, metric_prefix, dimensions):
     """ Puts metrics in target CloudWatch namespace. """
 
     timestamp = arrow.get().datetime
@@ -61,6 +61,7 @@ def put_metrics(metrics, region, namespace, metric_prefix):
         else:
             metric_data.append({
                 'MetricName': metric_prefix + name,
+                'Dimensions': dimensions,
                 'Timestamp': timestamp,
                 'Value': value,
                 'Unit': unit
@@ -172,18 +173,34 @@ def retrieve_stats(stats_server):
     return response.json()
 
 
-def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix):
+def get_dimensions(dimensions):
+    dims = []
+    for dim in dimensions:
+        try:
+            dims.append({
+                'Name': dim[0].replace('_', ' ').title(),
+                'Value': dim[1],
+            })
+        except Exception as e:
+            logging.error("Failed to include dimmension %s: %s" % dim, e)
+
+    return dims
+
+
+def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix, dimensions):
     """ Update a CloudWatch namespace with the latest metrics generated from
         uWSGI Stats Server.
     """
     def f():
+        dims = get_dimensions(dimensions)
         try:
             stats = retrieve_stats(stats_server)
         except Exception as e:
             logging.error("Failed to retrieve uWSGI stats: %s" % e)
+            return
         try:
             metrics = generate_metrics(stats)
-            put_metrics(metrics, region, namespace, metric_prefix)
+            put_metrics(metrics, region, namespace, metric_prefix, dims)
         except Exception as e:
             logging.error("Failed to put metrics: %s" % e)
 
@@ -196,6 +213,7 @@ def update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix):
 @click.option('--namespace', required=True, callback=validation.namespace)
 @click.option('--frequency', default=60, callback=validation.frequency)
 @click.option('--metric-prefix', default='uWSGI', callback=validation.prefix)
-def cli(stats_server, region, namespace, frequency, metric_prefix):
-    run_periodically(update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix), frequency)
+@click.option('--dimension', default=None, callback=validation.dimensions, type=(str, str), multiple=True)
+def cli(stats_server, region, namespace, frequency, metric_prefix, dimension):
+    run_periodically(update_cloudwatch_metrics(stats_server, region, namespace, metric_prefix, dimension), frequency)
     asyncio.get_event_loop().run_forever()

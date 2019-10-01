@@ -17,3 +17,7 @@ def namespace(ctx, param, value):
 
 def prefix(ctx, param, value):
     return value
+
+
+def dimensions(ctx, param, value):
+    return value
