@@ -178,7 +178,7 @@ def get_dimensions(dimensions):
     for dim in dimensions:
         try:
             dims.append({
-                'Name': dim[0].replace('_', ' ').title(),
+                'Name': dim[0].replace('_', ' '),
                 'Value': dim[1],
             })
         except Exception as e:
