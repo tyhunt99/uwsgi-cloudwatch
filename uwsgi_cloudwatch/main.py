@@ -55,6 +55,7 @@ def put_metrics(metrics, region, namespace, metric_prefix, dimensions):
                 metric_data.append({
                     'MetricName': metric_prefix + name,
                     'Timestamp': timestamp,
+                    'Dimensions': dimensions,
                     'Value': i,
                     'Unit': unit
                 })
